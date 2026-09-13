@@ -13,7 +13,6 @@ window.__ModuleLoader__ = { load({ factory }) {
     'react': R,
     'react-dom/client': { createRoot: function () { return window.ReactDOM.createRoot.apply(window.ReactDOM, arguments); } },
     'react/jsx-runtime': { jsx: jsxShim, jsxs: jsxShim, Fragment: R.Fragment },
-    '@deepseek-ai/dsh-client-runtime': {},
   };
   window.__exports__ = factory(function (name) {
     if (!(name in reg)) throw new Error('unexpected require: ' + name);

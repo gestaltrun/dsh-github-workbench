@@ -1,20 +1,26 @@
-name: CI
+name: Plugin CI
 on:
   push:
-    branches: [main]
+    branches: [main, 'codex/**']
   pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 9 }
+        with:
+          version: 11.8.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm build
-      - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm run release:pack -- --out "${{ runner.temp }}/plugin-pack"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate
+          path: ${{ runner.temp }}/plugin-pack

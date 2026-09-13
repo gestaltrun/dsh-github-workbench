@@ -3,7 +3,6 @@
  * tab 形态下宿主 pluginToggles 里的 token 作为兜底回退(better-sidebar 原生齿轮设置)。
  */
 
-import type { ClientCtx, SidebarRegistry } from './types.ts';
 import { parseGithubRemote, parseRepoInput, clamp, type GhRef } from './lib.ts';
 
 const K = {
@@ -91,27 +90,9 @@ export function loadPanelWidth(): number {
 }
 export function savePanelWidth(w: number): void { lsSet(K.panelWidth, String(clamp(Math.round(w), 320, 720))); }
 
-/**
- * tab 形态下,宿主 pluginToggles 里保存的 token 兜底:
- * 本地无 token 而宿主有 → 回填本地(一次性合并,之后以本地为准)。
- */
-export function absorbHostToken(ctx: ClientCtx): void {
-  let svc: SidebarRegistry & {
-    getSnapshot?: () => { prefs?: { pluginSettings?: Record<string, Record<string, unknown>> } };
-  } | undefined;
-  try { svc = (ctx as { betterSidebar?: typeof svc }).betterSidebar; } catch { svc = undefined; }
-  try {
-    const blob = svc?.getSnapshot?.().prefs?.pluginSettings?.['github-workbench:repo'];
-    const hostToken = typeof blob?.token === 'string' ? blob.token : '';
-    if (hostToken && !loadToken()) saveToken(hostToken);
-    const hostAuto = typeof blob?.autoRefreshSec === 'number' ? blob.autoRefreshSec : -1;
-    if (hostAuto >= 0 && !lsGet(K.autoSec)) saveAutoRefreshSec(hostAuto);
-  } catch { /* 服务不可用时静默 */ }
-}
-
 /** 从会话工作区自动识别仓库:读 .git/config 解析 GitHub origin。 */
 export async function detectWorkspaceRepo(sessionId: string): Promise<GhRef | null> {
-  for (const path of ['.git/config', '../.git/config']) {
+  for (const path of ['.git/config']) {
     try {
       const res = await fetch('/sidebar/api/fs.read', {
         method: 'POST',

@@ -23,7 +23,7 @@ describe('ModuleLoader id gate', () => {
       .join('\n');
     const insertMatch = withoutComments.match(/- insert:[\s\S]*?^\s+name:\s*(\S+)/m);
     assert.ok(insertMatch, 'cordis.patch.yml must have insert name: under - insert:');
-    const insertName = insertMatch[1];
+    const insertName = insertMatch[1].replace(/^['"]|['"]$/g, '');
 
     assert.equal(loaderId, pkgName);
     assert.equal(insertName, pkgName);

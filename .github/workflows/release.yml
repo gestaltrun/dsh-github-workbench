@@ -1,34 +1,39 @@
 name: Release
-
 on:
-  push:
-    tags: ['v*']
-
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish this candidate package
+        type: boolean
+        default: false
+  release:
+    types: [published]
 permissions:
-  contents: write
+  contents: read
   id-token: write
-
 jobs:
   publish:
+    if: github.repository == 'gestaltrun/dsh-github-workbench'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 9 }
+        with:
+          version: 11.8.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
-      - name: Publish to npm
-        run: npm publish --access public
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build candidate or explicitly publish
         env:
+          PUBLISH_PACKAGE: ${{ inputs.publish }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = release ] || [ "$PUBLISH_PACKAGE" = true ]; then
+            pnpm run release:publish -- --out "${{ runner.temp }}/plugin-release"
+          else
+            pnpm run release:pack -- --out "${{ runner.temp }}/plugin-release"
+          fi

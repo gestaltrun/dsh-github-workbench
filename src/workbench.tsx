@@ -103,12 +103,9 @@ export function WorkbenchApp({ sessionId, visible, seedUrl }: WorkbenchAppProps)
     return () => ro.disconnect();
   }, []);
 
-  // 样式注入 + 宿主 token 兜底合并(一次性)
+  // 样式和浏览器本地凭据
   useEffect(() => {
     ensureStyles();
-    cfg.absorbHostToken({
-      effect(fn) { fn(); },
-    });
     setToken(cfg.loadToken());
   }, []);
 

@@ -47,6 +47,8 @@ interface GhResponse {
 }
 
 async function ghRequest(path: string, opts: GhOpts = {}): Promise<GhResponse> {
+  const target = new URL(path, API);
+  if (target.origin !== API || target.username || target.password) throw new GhError('Invalid GitHub API destination', 400);
   const headers: Record<string, string> = {
     accept: opts.accept ?? 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
@@ -55,7 +57,9 @@ async function ghRequest(path: string, opts: GhOpts = {}): Promise<GhResponse> {
   if (token) headers.authorization = `Bearer ${token}`;
   if (opts.body !== undefined) headers['content-type'] = 'application/json';
 
-  const res = await fetch(path.startsWith('http') ? path : `${API}${path}`, {
+  const res = await fetch(target.href, {
+    redirect: 'error',
+    credentials: 'omit',
     method: opts.method ?? 'GET',
     headers,
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
