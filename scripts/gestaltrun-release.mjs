@@ -7,6 +7,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { parse } from 'yaml';
+import { canonicalizeGzip } from './canonical-gzip.mjs';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const NAME = '@gestaltrun/dsh-github-workbench';
 export const REPOSITORY = 'gestaltrun/dsh-github-workbench';
@@ -89,6 +90,7 @@ function main() {
   pnpm(['run', 'test:release']);
   mkdirSync(out, { recursive: true });
   pnpm(['--config.ignore-scripts=true', 'pack', '--pack-destination', out]);
+  writeFileSync(archive, canonicalizeGzip(readFileSync(archive)));
   validateArchive(archive);
   const result = { name: NAME, version: pkg.version, filename, integrity: integrity(archive), repository: REPOSITORY };
   writeFileSync(join(out, `${NAME.split('/')[1]}-artifact.json`), JSON.stringify(result, null, 2) + '\n');
